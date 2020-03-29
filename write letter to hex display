@@ -1,0 +1,32 @@
+/* For this question you are to write an assembly-language program for the ARM processor. 
+Theprogram[10 marks] should perform the following task: in an inﬁnite loop read from
+the SW port (address 0xFF200040). If the value read from SW is 0, 1, 2, or 3 then you
+should display the characters ’g’, ’o’, ’o’, and ’d’, respectively, on the HEX0 
+display (address 0xFF200020). You should error-check the value read from the SW
+port; if it is greater than 3 then you should display a ’-’ on HEX0. 
+Forthe7-segmentdisplayrecallthatsegment 0 is at thetop and then the segments are 
+orderedfrom 1 to 5 in the clockwise direction, with segment 6 in the middle.
+*/
+
+.global _start
+_start:
+	_start: MOV R2, #HEX_ADDRESS
+			LDR R2, [R2]
+			MOV R3, #SW_ADDRESS
+			LDR R3, [R3]
+			MOV R4, #HEX_bits
+			
+	Do_Display: LDR R0, [R3] //load SW switches
+				MOV R1, #0b01000000
+				CMP R0, #3
+				BGT DASH
+				LDRB R1, [R4, R0]
+	
+	DASH: STR R1, [R2]
+		  B Do_Display
+	
+	
+HEX_ADDRESS: .word 0xFF200020
+SW_ADDRESS: .word 0xFF200040
+HEX_bits: .word 0x5E5C5C6F
+	
