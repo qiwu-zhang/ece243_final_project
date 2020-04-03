@@ -31,6 +31,8 @@ void wait_for_vsync(){
     
     status = *(pixel_ctrl_ptr + 3); // Wait for the S bit to become 0, that means VGA sweep is done
     //3*(4 bits) = 12 bits = 0xFF20302C
+
+    //Polling to get status bit
     while ((status & 0x01) != 0) { //wait until bit S of the Status register becomes equal to 0
         status = *(pixel_ctrl_ptr + 3);
     }
@@ -45,6 +47,21 @@ void draw_block(int x_start, int y_start, int colour){
       }
 }
 
+void load_screen() {
+    for (int x = 0; x < 320; x++) {
+        for (int y = 0; y < 240; y++) {
+            plot_pixel(x, y, BLACK);//Plotting black pixel all over the VGA display
+        }
+    }
+
+    draw_colour_choice_and_brush_size();
+    draw_line(50, 100, 50, 200, WHITE);  // vertical line from (100, 100) to (100, 200)
+    draw_line(50, 100, 250, 100, WHITE); // hoizontal line from (100, 100) to (200, 100)
+    draw_line(250, 100, 250, 200, WHITE); // vertical line from (200, 100) to (200, 200)
+    draw_line(50, 200, 250, 200, WHITE); // horizontal line from (200, 100) to (200, 200)
+}
+
+
 void clear_screen(bool clear_text_box) {
   if(!clear_text_box){ //clear the whole screen
     for (int x = 0; x < 320; x++) {
@@ -53,17 +70,12 @@ void clear_screen(bool clear_text_box) {
         }
     }
   }else{
-    for (int x = 50; x < 250; x++) { 
-        for (int y = 100; y < 200; y++) {
+    for (int x = 51; x < 250; x++) { 
+        for (int y = 101; y < 200; y++) {
             plot_pixel(x, y, BLACK);//Plotting black pixel all over the VGA display
         }
     }
   }
-  draw_colour_choice_and_brush_size();
-  draw_line(50, 100, 50, 200, WHITE);  // vertical line from (100, 100) to (100, 200)
-  draw_line(50, 100, 250, 100, WHITE); // horizontal line from (100, 100) to (200, 100)
-  draw_line(250, 100, 250, 200, WHITE); // vertical line from (200, 100) to (200, 200)
-  draw_line(50, 200, 250, 200, WHITE); // horizontal line from (200, 100) to (200, 200)
 }
 
 
