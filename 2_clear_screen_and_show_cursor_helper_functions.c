@@ -1,3 +1,5 @@
+#include "declaration.h"
+
 void draw_cursor(int x_cursor, int y_cursor, int colour, bool left_clicked){
    
       counting_down();
