@@ -1,16 +1,16 @@
 #include "declaration.h"
 
-void draw_cursor(int x_cursor, int y_cursor, int colour, bool left_clicked){
+void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool left_clicked){
    
       counting_down();
-      draw_block(x_cursor, y_cursor, colour);
+      draw_block(x_cursor, y_cursor, colour, size);
       wait_for_vsync(); // swap front and back buffers on VGA vertical sync
       pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
 
       if(!left_clicked){
         counting_down();
         draw_block(x_cursor, y_cursor, BLACK);
-    clear_screen(1);
+        clear_screen(1);
       }
 }
 
@@ -39,9 +39,9 @@ void wait_for_vsync(){
 }
 
 
-void draw_block(int x_start, int y_start, int colour){
-    for(int x = x_start; x < x_start + 4; x++){
-        for(int y = y_start; y < y_start + 4; y++){
+void draw_block(int x_start, int y_start, int colour, int size){
+    for(int x = x_start; x < x_start + size; x++){
+        for(int y = y_start; y < y_start + size; y++){
             plot_pixel(x, y, colour);//show cursor
         }
       }
@@ -93,40 +93,46 @@ void counting_down(){
 }
 
   
-void draw_colour_choice_and_brush_size(){
-    for(int x = 20; x < 28; x++){
-        for(int y = 20; y < 28; y++){
-            plot_pixel(x, y, PINK);//show cursor
-        }
+void draw_colour_choice_and_brush_size(){ 
+    for(int x = 20; x < 28; x++){ //pink brush
+      for(int y = 20; y < 28; y++){
+          plot_pixel(x, y, PINK);
+      }
     }
   
-  for(int x = 36; x < 44; x++){
-        for(int y = 20; y < 28; y++){
-            plot_pixel(x, y, BLUE);//show cursor
-        }
+  for(int x = 36; x < 44; x++){ //blue brush
+    for(int y = 20; y < 28; y++){
+        plot_pixel(x, y, BLUE);
+    }
+  }
+  
+  for(int x = 52; x < 60; x++){ //red brush
+    for(int y = 20; y < 28; y++){
+        plot_pixel(x, y, RED);
+    }
+  }
+
+    for(int x = 68; x < 76; x++){ //red brush
+      for(int y = 20; y < 28; y++){
+          plot_pixel(x, y, WHITE);
+      }
     }
   
-  for(int x = 52; x < 60; x++){
-        for(int y = 20; y < 28; y++){
-            plot_pixel(x, y, RED);//show cursor
-        }
-    }
-  
-   for(int x = 20; x < 24; x++){
+   for(int x = 20; x < 24; x++){ 
         for(int y = 36; y < 40; y++){
-            plot_pixel(x, y, WHITE);//show cursor
+            plot_pixel(x, y, WHITE);
         }
     }
   
   for(int x = 32; x < 40; x++){
         for(int y = 36; y < 44; y++){
-            plot_pixel(x, y, WHITE);//show cursor
+            plot_pixel(x, y, WHITE);
         }
     }
   
   for(int x = 48; x < 60; x++){
         for(int y = 36; y < 48; y++){
-            plot_pixel(x, y, WHITE);//show cursor
+            plot_pixel(x, y, WHITE);
         }
     }
 }
