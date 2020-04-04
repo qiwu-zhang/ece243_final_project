@@ -31,7 +31,8 @@ int main(void){
 
   //Global signal indicating if the left button on the mouse is pressed
   left_clicked = 0;
-  int cursor_colour = WHITE;
+  int cursor_colour = WHITE; //initialize to white brush
+  int cursor_size = 4;
 
   //An array that hold cursor's x/y location in the VGA display
   int cursor_location[2] = {150, 150};
@@ -46,13 +47,22 @@ int main(void){
     // Update cursor_location and draw
     cursor_location[0] = cursor_location[0] + movement.dx;
     cursor_location[1] = cursor_location[1] + movement.dy;
-    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, left_clicked);
 
-    // for(int x = 50; x< 249;x++){
-    //   for(int y = 100; y< 199; y++){
-    //     draw_cursor(x, y, cursor_colour, left_clicked);
-    //   }
-    // }
+    if(cursor_location[0] >= 20 && cursor_location[0] <= 28 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){ //if clicked on the pink
+      cursor_colour = PINK;
+    }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
+      cursor_colour = BLUE;
+    }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
+      cursor_colour = WHITE;
+    }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 36 && cursor_location[1] <= 40 && left_clicked){
+      cursor_size = 4;
+    }else if(cursor_location[0] >= 32 && cursor_location[0] <= 40 && cursor_location[1] >= 36 && cursor_location[1] <= 44 && left_clicked){
+      cursor_size = 8;
+    }else if(cursor_location[0] >= 48 && cursor_location[0] <= 60 && cursor_location[1] >= 36 && cursor_location[1] <= 48 && left_clicked){
+      cursor_size = 12;
+    }
+
+    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
   
     wait_for_vsync(); // swap front and back buffers on VGA vertical sync
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
