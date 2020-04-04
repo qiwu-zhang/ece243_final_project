@@ -51,7 +51,7 @@ mouse_movement get_mouse_movement();
 
 #include <stdlib.h>
 #include <stdbool.h>
-
+#include "declaration.h"
 
 
 int main(void){
@@ -82,7 +82,8 @@ int main(void){
 
   //Global signal indicating if the left button on the mouse is pressed
   left_clicked = 0;
-  int cursor_colour = WHITE;
+  int cursor_colour = WHITE; //initialize to white brush
+  int cursor_size = 4;
 
   //An array that hold cursor's x/y location in the VGA display
   int cursor_location[2] = {150, 150};
@@ -97,13 +98,22 @@ int main(void){
     // Update cursor_location and draw
     cursor_location[0] = cursor_location[0] + movement.dx;
     cursor_location[1] = cursor_location[1] + movement.dy;
-    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, left_clicked);
 
-    // for(int x = 50; x< 249;x++){
-    //   for(int y = 100; y< 199; y++){
-    //     draw_cursor(x, y, cursor_colour, left_clicked);
-    //   }
-    // }
+    if(cursor_location[0] >= 20 && cursor_location[0] <= 28 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){ //if clicked on the pink
+      cursor_colour = PINK;
+    }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
+      cursor_colour = BLUE;
+    }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
+      cursor_colour = WHITE;
+    }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 36 && cursor_location[1] <= 40 && left_clicked){
+      cursor_size = 4;
+    }else if(cursor_location[0] >= 32 && cursor_location[0] <= 40 && cursor_location[1] >= 36 && cursor_location[1] <= 44 && left_clicked){
+      cursor_size = 8;
+    }else if(cursor_location[0] >= 48 && cursor_location[0] <= 60 && cursor_location[1] >= 36 && cursor_location[1] <= 48 && left_clicked){
+      cursor_size = 12;
+    }
+
+    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
   
     wait_for_vsync(); // swap front and back buffers on VGA vertical sync
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
@@ -114,29 +124,21 @@ int main(void){
 
 
 
-
-
 /********************************************************************************************************************/
 
+#include "declaration.h"
 
-
-
-
-
-
-
-
-void draw_cursor(int x_cursor, int y_cursor, int colour, bool left_clicked){
+void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool left_clicked){
    
       counting_down();
-      draw_block(x_cursor, y_cursor, colour);
+      draw_block(x_cursor, y_cursor, colour, size);
       wait_for_vsync(); // swap front and back buffers on VGA vertical sync
       pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
 
       if(!left_clicked){
         counting_down();
-        draw_block(x_cursor, y_cursor, BLACK);
-    clear_screen(1);
+        draw_block(x_cursor, y_cursor, BLACK, size);
+        clear_screen(1);
       }
 }
 
@@ -165,9 +167,9 @@ void wait_for_vsync(){
 }
 
 
-void draw_block(int x_start, int y_start, int colour){
-    for(int x = x_start; x < x_start + 4; x++){
-        for(int y = y_start; y < y_start + 4; y++){
+void draw_block(int x_start, int y_start, int colour, int size){
+    for(int x = x_start; x < x_start + size; x++){
+        for(int y = y_start; y < y_start + size; y++){
             plot_pixel(x, y, colour);//show cursor
         }
       }
@@ -182,7 +184,7 @@ void load_screen() {
 
     draw_colour_choice_and_brush_size();
     draw_line(50, 100, 50, 200, WHITE);  // vertical line from (100, 100) to (100, 200)
-    draw_line(50, 100, 250, 100, WHITE); // horizontal line from (100, 100) to (200, 100)
+    draw_line(50, 100, 250, 100, WHITE); // hoizontal line from (100, 100) to (200, 100)
     draw_line(250, 100, 250, 200, WHITE); // vertical line from (200, 100) to (200, 200)
     draw_line(50, 200, 250, 200, WHITE); // horizontal line from (200, 100) to (200, 200)
 }
@@ -219,40 +221,46 @@ void counting_down(){
 }
 
   
-void draw_colour_choice_and_brush_size(){
-    for(int x = 20; x < 28; x++){
-        for(int y = 20; y < 28; y++){
-            plot_pixel(x, y, PINK);//show cursor
-        }
+void draw_colour_choice_and_brush_size(){ 
+    for(int x = 20; x < 28; x++){ //pink brush
+      for(int y = 20; y < 28; y++){
+          plot_pixel(x, y, PINK);
+      }
     }
   
-  for(int x = 36; x < 44; x++){
-        for(int y = 20; y < 28; y++){
-            plot_pixel(x, y, BLUE);//show cursor
-        }
+  for(int x = 36; x < 44; x++){ //blue brush
+    for(int y = 20; y < 28; y++){
+        plot_pixel(x, y, BLUE);
+    }
+  }
+  
+  for(int x = 52; x < 60; x++){ //red brush
+    for(int y = 20; y < 28; y++){
+        plot_pixel(x, y, RED);
+    }
+  }
+
+    for(int x = 68; x < 76; x++){ //red brush
+      for(int y = 20; y < 28; y++){
+          plot_pixel(x, y, WHITE);
+      }
     }
   
-  for(int x = 52; x < 60; x++){
-        for(int y = 20; y < 28; y++){
-            plot_pixel(x, y, RED);//show cursor
-        }
-    }
-  
-   for(int x = 20; x < 24; x++){
+   for(int x = 20; x < 24; x++){ //4x4 block
         for(int y = 36; y < 40; y++){
-            plot_pixel(x, y, WHITE);//show cursor
+            plot_pixel(x, y, WHITE);
         }
     }
   
-  for(int x = 32; x < 40; x++){
+  for(int x = 32; x < 40; x++){ //8x8 block
         for(int y = 36; y < 44; y++){
-            plot_pixel(x, y, WHITE);//show cursor
+            plot_pixel(x, y, WHITE);
         }
     }
   
-  for(int x = 48; x < 60; x++){
+  for(int x = 48; x < 60; x++){ //12x12 block
         for(int y = 36; y < 48; y++){
-            plot_pixel(x, y, WHITE);//show cursor
+            plot_pixel(x, y, WHITE);
         }
     }
 }
