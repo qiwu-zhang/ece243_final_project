@@ -48,6 +48,9 @@ int main(void){
     cursor_location[0] = cursor_location[0] + movement.dx;
     cursor_location[1] = cursor_location[1] + movement.dy;
 
+    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, movement.left_pressed_bit);
+
+
     if(cursor_location[0] >= 20 && cursor_location[0] <= 28 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){ //if clicked on the pink
       cursor_colour = PINK;
     }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){

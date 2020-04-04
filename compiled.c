@@ -331,16 +331,16 @@ void swap(int* x, int* y) {
 
 
 
-
 mouse_movement get_mouse_movement() {
 	//Declare return struct variable
 	mouse_movement movement;
 
 	// Up counter resets upon counts to 3 to retrieve one 3-byte movement packet
 	int counter = 1;
-	unsigned char byte1 = 0;
-	unsigned char byte2 = 0;
-	unsigned char byte3 = 0;
+	// Unsigned char: 1 byte
+	int byte1 = 0;
+	int byte2 = 0;
+	int byte3 = 0;
 
 	volatile int * PS2_ptr = (int *) 0xFF200100;  // PS/2 port address
 
@@ -359,8 +359,7 @@ mouse_movement get_mouse_movement() {
 			byte3 = PS2_data & 0xFF;
 		}
 
-		printf("x_movement byte (byte 2) is %u \n", (unsigned int) byte2);
-		printf("y_movement byte (byte 3) is %u \n", (unsigned int) byte3);
+
 
 		if (counter ==3) { // One 3-byte movement packet has been stored in byte1/2/3, returning...
 			//Get dx/dy movement
@@ -368,30 +367,42 @@ mouse_movement get_mouse_movement() {
 			int y_sign_bit = byte1 & 0x20; //0b00100000
 			int left_pressed_bit = byte1 & 0x01;
 			
+			//Constructing movement struct element
+			movement.left_pressed_bit = left_pressed_bit;
+			
 			if(x_sign_bit == 0) { //positive dx
-				movement.dx = (int) byte2;
-			} else { //negative dx
-				movement.dx = -(int) byte2;
+				movement.dx = byte2;
+			} else { //negative dx with sign extension
+				int sign_extended_twos =   0xFFFFFF00 + byte2 ; // Equivalent to 0xFFFFFE00 + byte 2
+				movement.dx = sign_extended_twos;
 			}
 
 			if(y_sign_bit == 0) { //positive dx
-				movement.dy = (int) byte3;
+				movement.dy = byte3;
 			} else { //negative dx
-				movement.dy = -(int) byte3;
+				int sign_extended_twos = 0xFFFFFF00 + byte3;
+				movement.dy = sign_extended_twos;
 			}
 
-			movement.left_pressed_bit = left_pressed_bit;
+
+			
+			printf("x_movement byte (byte 2) is %i \n", movement.dx);
+			printf("y_movement byte (byte 3) is %i \n", movement.dy);
 			printf("the left-pressed bit is %i \n", left_pressed_bit);
 
 			return movement;
 
-		} else {
+		} else { // Continue reading unfinished 3-byte packet
 			counter ++;
 		}
+
+		if ( (byte2 == 0xAA) && (byte3 == 0x00) )
+		{
+			// mouse inserted; initialize sending of data
+			*(PS2_ptr) = 0xF4;
+		}
+		
 		
     }
-
-	printf("Returning empty mouse movement - no movement \n");
-	return movement;
 
 }
