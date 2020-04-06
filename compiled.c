@@ -199,22 +199,6 @@ void draw_red_brush(){
 }
 
 
-int main(void){
-    volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
-  int num = 0;
-    /* Read location of the pixel buffer from the pixel buffer controller */
-    pixel_buffer_start = *pixel_ctrl_ptr;
-  clear_screen();
-    draw_black_brush();
-  draw_blue_brush();
-  draw_green_brush();
-    draw_pink_brush();
-  draw_red_brush();
-}
-
-
-
-
 
 int main(void){
   
