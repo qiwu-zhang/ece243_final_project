@@ -227,7 +227,7 @@ int main(void){
 
 
   //Global signal indicating if the left button on the mouse is pressed
-  int cursor_colour = WHITE; //initialize to white brush
+  int cursor_colour = BLACK; //initialize to white brush
   int cursor_size = 4;
 
   //An array that hold cursor's x/y location in the VGA display
@@ -239,7 +239,7 @@ int main(void){
     //@ Need a array to track the previous location(x,y) of the cursor and erase by drawing black on previous
     // clear_screen(1); 
     // Erase by drawing black on the last last previous location () 
-    draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], BLACK, cursor_size, left_clicked);
+    draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], WHITE, cursor_size, left_clicked);
 
     mouse_movement movement = get_mouse_movement();
     bool left_clicked = movement.left_pressed_bit;
@@ -328,15 +328,15 @@ void draw_block(int x_start, int y_start, int colour, int size){
 void load_screen() {
     for (int x = 0; x < 320; x++) {
         for (int y = 0; y < 240; y++) {
-            plot_pixel(x, y, BLACK);//Plotting black pixel all over the VGA display
+            plot_pixel(x, y, WHITE);//Plotting black pixel all over the VGA display
         }
     }
 
     draw_colour_choice_and_brush_size();
-    draw_line(50, 100, 50, 200, WHITE);  // vertical line from (100, 100) to (100, 200)
-    draw_line(50, 100, 250, 100, WHITE); // hoizontal line from (100, 100) to (200, 100)
-    draw_line(250, 100, 250, 200, WHITE); // vertical line from (200, 100) to (200, 200)
-    draw_line(50, 200, 250, 200, WHITE); // horizontal line from (200, 100) to (200, 200)
+    draw_line(50, 100, 50, 200, BLACK);  // vertical line from (100, 100) to (100, 200)
+    draw_line(50, 100, 250, 100, BLACK); // hoizontal line from (100, 100) to (200, 100)
+    draw_line(250, 100, 250, 200, BLACK); // vertical line from (200, 100) to (200, 200)
+    draw_line(50, 200, 250, 200, BLACK); // horizontal line from (200, 100) to (200, 200)
 }
 
 
@@ -344,13 +344,13 @@ void clear_screen(bool clear_text_box) {
   if(!clear_text_box){ //clear the whole screen
     for (int x = 0; x < 320; x++) {
         for (int y = 0; y < 240; y++) {
-            plot_pixel(x, y, BLACK);//Plotting black pixel all over the VGA display
+            plot_pixel(x, y, WHITE);//Plotting black pixel all over the VGA display
         }
     }
   }else{
     for (int x = 51; x < 250; x++) { 
         for (int y = 101; y < 200; y++) {
-            plot_pixel(x, y, BLACK);//Plotting black pixel all over the VGA display
+            plot_pixel(x, y, WHITE);//Plotting black pixel all over the VGA display
         }
     }
   }
