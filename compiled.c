@@ -10,6 +10,7 @@
 #define PINK  0xF81F
 #define BLUE  0x001F
 #define RED   0xF800
+#define GREEN 0x07E0 
 
 void load_screen();
 void clear_screen(bool clear_text_box);
@@ -26,6 +27,8 @@ volatile int* PRIVATE_TIMER_PTR = (int*)0xFFFEC600; //set up a pointer to A9 pri
 volatile int* pixel_ctrl_ptr;
 bool left_clicked;
 
+int cursor_colour;
+
 //PS/2 mouse send movement/button information to the host using the 3-byte movementpacket
 //This struct is used to store the key information we need from the 3-byte movement packet
 typedef struct  {
@@ -39,9 +42,6 @@ mouse_movement get_mouse_movement();
 
 
 #endif
-
-#include <stdbool.h>
-#include <stdlib.h>
 
 volatile int pixel_buffer_start; 
 int black_brush[192] = {
@@ -115,7 +115,6 @@ int red_brush[] = {
   0xff, 0xff, 0xff, 0xff, 0x79, 0xc6, 0x00, 0xc8, 0x29, 0x7a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x09, 0x6a, 0x1c, 0xe7, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
   
-
 
  void draw_black_brush(){
   int i = 0, j = 0;
@@ -200,6 +199,7 @@ void draw_red_brush(){
 
 
 
+
 int main(void){
   
 
@@ -260,6 +260,16 @@ int main(void){
       cursor_colour = PINK;
     }else if(cursor_location[0] >= 68 && cursor_location[0] <= 76 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
       cursor_colour = RED;
+    }else if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 16 && cursor_location[1] <= 20 && left_clicked){
+      cursor_size = 4;
+    }else if(cursor_location[0] >= 16 && cursor_location[0] <= 24 && cursor_location[1] >= 16 && cursor_location[1] <= 24 && left_clicked){
+      cursor_size = 8;
+    }else if(cursor_location[0] >= 32 && cursor_location[0] <= 44 && cursor_location[1] >= 16 && cursor_location[1] <= 28 && left_clicked){
+      cursor_size = 12;
+    }else if(cursor_location[0] >= 52 && cursor_location[0] <=68 && cursor_location[1] >= 16 && cursor_location[1] <= 32 && left_clicked){
+      cursor_size = 16;
+    }else if(cursor_location[0] >= 76 && cursor_location[0] <= 96 && cursor_location[1] >= 16 && cursor_location[1] <= 36 && left_clicked){
+      cursor_size = 20;
     }
 
     counting_down();
@@ -285,10 +295,6 @@ void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool left_cli
         clear_screen(1);
       }
 }
-
-
-
-
 
 
 
@@ -375,24 +381,37 @@ void draw_colour_choice_and_brush_size(){
    draw_green_brush();
    draw_pink_brush();
    draw_red_brush();
-	
-   for(int x = 20; x < 24; x++){ //4x4 block
-        for(int y = 36; y < 40; y++){
-            plot_pixel(x, y, WHITE);
-        }
-    }
   
-  for(int x = 32; x < 40; x++){ //8x8 block
-        for(int y = 36; y < 44; y++){
-            plot_pixel(x, y, WHITE);
+   for(int x = 4; x < 8; x++){ //4x4 block
+        for(int y = 16; y < 20; y++){
+            plot_pixel(x, y, cursor_colour);
         }
-    }
+   }
   
-  for(int x = 48; x < 60; x++){ //12x12 block
-        for(int y = 36; y < 48; y++){
-            plot_pixel(x, y, WHITE);
+  for(int x = 16; x < 24; x++){ //8x8 block
+        for(int y = 16; y < 24; y++){
+            plot_pixel(x, y, cursor_colour);
         }
-    }
+  }
+  
+  for(int x = 32; x < 44; x++){ //12x12 block
+        for(int y = 16; y < 28; y++){
+            plot_pixel(x, y, cursor_colour);
+        }
+  }
+  
+ for(int x = 52; x < 68; x++){ //12x12 block
+        for(int y = 16; y < 32; y++){
+            plot_pixel(x, y, cursor_colour);
+        }
+  }
+  
+ for(int x = 76; x < 96; x++){ //12x12 block
+        for(int y = 16; y < 36; y++){
+            plot_pixel(x, y, cursor_colour);
+        }
+  }
+
 }
 
 
@@ -448,77 +467,77 @@ void swap(int* x, int* y) {
 
   
 mouse_movement get_mouse_movement() {
-	//Declare return struct variable
-	mouse_movement movement;
+  //Declare return struct variable
+  mouse_movement movement;
 
-	// Up counter resets upon counts to 3 to retrieve one 3-byte movement packet
-	int counter = 1;
-	// Unsigned char: 1 byte
-	int byte1 = 0;
-	int byte2 = 0;
-	int byte3 = 0;
+  // Up counter resets upon counts to 3 to retrieve one 3-byte movement packet
+  int counter = 1;
+  // Unsigned char: 1 byte
+  int byte1 = 0;
+  int byte2 = 0;
+  int byte3 = 0;
 
-	volatile int * PS2_ptr = (int *) 0xFF200100;  // PS/2 port address
+  volatile int * PS2_ptr = (int *) 0xFF200100;  // PS/2 port address
 
     int PS2_data, RVALID;
 
     while(1) {
-        PS2_data = *(PS2_ptr);	// read the Data register in the PS/2 port
-		
-		RVALID = (PS2_data & 0x8000);	// extract the RVALID field (15th bit)
-		if (RVALID && counter == 1) {
-			// &0xFF: Only take the first 8 bits - data
-			byte1 = PS2_data & 0xFF; 
-		} else if (RVALID && counter == 2) {
-			byte2 = PS2_data & 0xFF;
-		} else if (RVALID && counter == 3) {
-			byte3 = PS2_data & 0xFF;
-		}
+        PS2_data = *(PS2_ptr);  // read the Data register in the PS/2 port
+    
+    RVALID = (PS2_data & 0x8000); // extract the RVALID field (15th bit)
+    if (RVALID && counter == 1) {
+      // &0xFF: Only take the first 8 bits - data
+      byte1 = PS2_data & 0xFF; 
+    } else if (RVALID && counter == 2) {
+      byte2 = PS2_data & 0xFF;
+    } else if (RVALID && counter == 3) {
+      byte3 = PS2_data & 0xFF;
+    }
 
 
 
-		if (counter ==3) { // One 3-byte movement packet has been stored in byte1/2/3, returning...
-			//Get dx/dy movement
-			int x_sign_bit = byte1 & 0x10; //0b00010000
-			int y_sign_bit = byte1 & 0x20; //0b00100000
-			int left_pressed_bit = byte1 & 0x01;
-			
-			//Constructing movement struct element
-			movement.left_pressed_bit = left_pressed_bit;
-			
-			if(x_sign_bit == 0) { //positive dx
-				movement.dx = byte2;
-			} else { //negative dx with sign extension
-				int sign_extended_twos =   0xFFFFFF00 + byte2 ; // Equivalent to 0xFFFFFE00 + byte 2
-				movement.dx = sign_extended_twos;
-			}
+    if (counter ==3) { // One 3-byte movement packet has been stored in byte1/2/3, returning...
+      //Get dx/dy movement
+      int x_sign_bit = byte1 & 0x10; //0b00010000
+      int y_sign_bit = byte1 & 0x20; //0b00100000
+      int left_pressed_bit = byte1 & 0x01;
+      
+      //Constructing movement struct element
+      movement.left_pressed_bit = left_pressed_bit;
+      
+      if(x_sign_bit == 0) { //positive dx
+        movement.dx = byte2;
+      } else { //negative dx with sign extension
+        int sign_extended_twos =   0xFFFFFF00 + byte2 ; // Equivalent to 0xFFFFFE00 + byte 2
+        movement.dx = sign_extended_twos;
+      }
 
-			if(y_sign_bit == 0) { //positive dx
-				movement.dy = byte3;
-			} else { //negative dx
-				int sign_extended_twos = 0xFFFFFF00 + byte3;
-				movement.dy = sign_extended_twos;
-			}
+      if(y_sign_bit == 0) { //positive dx
+        movement.dy = byte3;
+      } else { //negative dx
+        int sign_extended_twos = 0xFFFFFF00 + byte3;
+        movement.dy = sign_extended_twos;
+      }
 
 
-			
-			printf("x_movement byte (byte 2) is %i \n", movement.dx);
-			printf("y_movement byte (byte 3) is %i \n", movement.dy);
-			printf("the left-pressed bit is %i \n", left_pressed_bit);
+      
+      printf("x_movement byte (byte 2) is %i \n", movement.dx);
+      printf("y_movement byte (byte 3) is %i \n", movement.dy);
+      printf("the left-pressed bit is %i \n", left_pressed_bit);
 
-			return movement;
+      return movement;
 
-		} else { // Continue reading unfinished 3-byte packet
-			counter ++;
-		}
+    } else { // Continue reading unfinished 3-byte packet
+      counter ++;
+    }
 
-		if ( (byte2 == 0xAA) && (byte3 == 0x00) )
-		{
-			// mouse inserted; initialize sending of data
-			*(PS2_ptr) = 0xF4;
-		}
-		
-		
+    if ( (byte2 == 0xAA) && (byte3 == 0x00) )
+    {
+      // mouse inserted; initialize sending of data
+      *(PS2_ptr) = 0xF4;
+    }
+    
+    
     }
 
 }
