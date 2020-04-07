@@ -14,11 +14,11 @@
 void load_screen();
 void clear_screen(bool clear_text_box);
 void plot_pixel(int x, int y, short int line_color);
-void draw_cursor(int x_cursor, int y_cursor, int colour, bool left_clicked);
+void draw_cursor(int x_cursor, int y_cursor, int colour,int cursor_size, bool left_clicked);
 void wait_for_timer_interrupt();
 void wait_for_vsync();
 void counting_down();
-void draw_block(int x_start, int y_start, int colour);
+void draw_block(int x_start, int y_start, int colour, int size);
 void draw_colour_choice_and_brush_size();
 
 volatile int pixel_buffer_start; // global variable
@@ -40,18 +40,6 @@ mouse_movement get_mouse_movement();
 
 #endif
 
-
-
-
-
-/********************************************************************************************************************/
-
-
-
-
-#include <stdlib.h>
-#include <stdbool.h>
-#include "declaration.h"
 
 
 int main(void){
@@ -81,24 +69,29 @@ int main(void){
 
 
   //Global signal indicating if the left button on the mouse is pressed
-  left_clicked = 0;
   int cursor_colour = WHITE; //initialize to white brush
   int cursor_size = 4;
 
   //An array that hold cursor's x/y location in the VGA display
   int cursor_location[2] = {150, 150};
+  int prev_buffer_cursor_location[2] = {150, 150};
 
     
   while(true){
     //@ Need a array to track the previous location(x,y) of the cursor and erase by drawing black on previous
-    clear_screen(1); 
+    // clear_screen(1); 
+    // Erase by drawing black on the last last previous location () 
+    draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], BLACK, cursor_size, left_clicked);
 
     mouse_movement movement = get_mouse_movement();
-
-    // Update cursor_location and draw
+    bool left_clicked = movement.left_pressed_bit;
+    
+    // Update cursor_location
     cursor_location[0] = cursor_location[0] + movement.dx;
     cursor_location[1] = cursor_location[1] + movement.dy;
+    
 
+    //Update cursor size and colour based on cursor location and its clicking
     if(cursor_location[0] >= 20 && cursor_location[0] <= 28 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){ //if clicked on the pink
       cursor_colour = PINK;
     }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
@@ -113,6 +106,7 @@ int main(void){
       cursor_size = 12;
     }
 
+    counting_down();
     draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
   
     wait_for_vsync(); // swap front and back buffers on VGA vertical sync
@@ -123,24 +117,22 @@ int main(void){
 
 
 
-
-/********************************************************************************************************************/
-
-#include "declaration.h"
-
 void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool left_clicked){
-   
-      counting_down();
+
       draw_block(x_cursor, y_cursor, colour, size);
       wait_for_vsync(); // swap front and back buffers on VGA vertical sync
       pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
 
       if(!left_clicked){
         counting_down();
-        draw_block(x_cursor, y_cursor, BLACK, size);
+        draw_block(x_cursor, y_cursor, BLUE, size);
         clear_screen(1);
       }
 }
+
+
+
+
 
 
 
@@ -317,30 +309,16 @@ void swap(int* x, int* y) {
 
 
   
-
-
-
-  
-
-
-
-/********************************************************************************************************************/
-
-
-
-
-
-
-
 mouse_movement get_mouse_movement() {
 	//Declare return struct variable
 	mouse_movement movement;
 
 	// Up counter resets upon counts to 3 to retrieve one 3-byte movement packet
 	int counter = 1;
-	unsigned char byte1 = 0;
-	unsigned char byte2 = 0;
-	unsigned char byte3 = 0;
+	// Unsigned char: 1 byte
+	int byte1 = 0;
+	int byte2 = 0;
+	int byte3 = 0;
 
 	volatile int * PS2_ptr = (int *) 0xFF200100;  // PS/2 port address
 
@@ -359,8 +337,7 @@ mouse_movement get_mouse_movement() {
 			byte3 = PS2_data & 0xFF;
 		}
 
-		printf("x_movement byte (byte 2) is %u \n", (unsigned int) byte2);
-		printf("y_movement byte (byte 3) is %u \n", (unsigned int) byte3);
+
 
 		if (counter ==3) { // One 3-byte movement packet has been stored in byte1/2/3, returning...
 			//Get dx/dy movement
@@ -368,30 +345,42 @@ mouse_movement get_mouse_movement() {
 			int y_sign_bit = byte1 & 0x20; //0b00100000
 			int left_pressed_bit = byte1 & 0x01;
 			
+			//Constructing movement struct element
+			movement.left_pressed_bit = left_pressed_bit;
+			
 			if(x_sign_bit == 0) { //positive dx
-				movement.dx = (int) byte2;
-			} else { //negative dx
-				movement.dx = -(int) byte2;
+				movement.dx = byte2;
+			} else { //negative dx with sign extension
+				int sign_extended_twos =   0xFFFFFF00 + byte2 ; // Equivalent to 0xFFFFFE00 + byte 2
+				movement.dx = sign_extended_twos;
 			}
 
 			if(y_sign_bit == 0) { //positive dx
-				movement.dy = (int) byte3;
+				movement.dy = byte3;
 			} else { //negative dx
-				movement.dy = -(int) byte3;
+				int sign_extended_twos = 0xFFFFFF00 + byte3;
+				movement.dy = sign_extended_twos;
 			}
 
-			movement.left_pressed_bit = left_pressed_bit;
+
+			
+			printf("x_movement byte (byte 2) is %i \n", movement.dx);
+			printf("y_movement byte (byte 3) is %i \n", movement.dy);
 			printf("the left-pressed bit is %i \n", left_pressed_bit);
 
 			return movement;
 
-		} else {
+		} else { // Continue reading unfinished 3-byte packet
 			counter ++;
 		}
+
+		if ( (byte2 == 0xAA) && (byte3 == 0x00) )
+		{
+			// mouse inserted; initialize sending of data
+			*(PS2_ptr) = 0xF4;
+		}
+		
 		
     }
-
-	printf("Returning empty mouse movement - no movement \n");
-	return movement;
 
 }

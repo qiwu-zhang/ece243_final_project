@@ -9,7 +9,9 @@ void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool left_cli
 
       if(!left_clicked){
         counting_down();
-        draw_block(x_cursor, y_cursor, BLACK);
+
+        draw_block(x_cursor, y_cursor, BLACK, size);
+
         clear_screen(1);
       }
 }
@@ -118,19 +120,20 @@ void draw_colour_choice_and_brush_size(){
       }
     }
   
-   for(int x = 20; x < 24; x++){ 
+
+   for(int x = 20; x < 24; x++){ //4x4 block
         for(int y = 36; y < 40; y++){
             plot_pixel(x, y, WHITE);
         }
     }
   
-  for(int x = 32; x < 40; x++){
+  for(int x = 32; x < 40; x++){ //8x8 block
         for(int y = 36; y < 44; y++){
             plot_pixel(x, y, WHITE);
         }
     }
   
-  for(int x = 48; x < 60; x++){
+  for(int x = 48; x < 60; x++){ //12x12 block
         for(int y = 36; y < 48; y++){
             plot_pixel(x, y, WHITE);
         }

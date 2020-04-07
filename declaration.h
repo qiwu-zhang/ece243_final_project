@@ -14,7 +14,8 @@
 void load_screen();
 void clear_screen(bool clear_text_box);
 void plot_pixel(int x, int y, short int line_color);
-void draw_cursor(int x_cursor, int y_cursor, int colour,int size bool left_clicked);
+
+void draw_cursor(int x_cursor, int y_cursor, int colour,int cursor_size, bool left_clicked);
 void wait_for_timer_interrupt();
 void wait_for_vsync();
 void counting_down();
