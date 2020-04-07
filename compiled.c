@@ -24,8 +24,10 @@ void draw_colour_choice_and_brush_size();
 
 volatile int pixel_buffer_start; // global variable
 volatile int* PRIVATE_TIMER_PTR = (int*)0xFFFEC600; //set up a pointer to A9 private timer
+volatile int* RESET_BUTTON_PTR = (int*)0xFF20005C; //set up a pointer to buttons
 volatile int* pixel_ctrl_ptr;
 bool left_clicked;
+int reset;
 
 int cursor_colour;
 
@@ -42,8 +44,7 @@ mouse_movement get_mouse_movement();
 
 
 #endif
-
-volatile int pixel_buffer_start; 
+ 
 int black_brush[192] = {
   /*Pixel format: Red: 5 bit, Green: 6 bit, Blue: 5 bit*/
   0x79, 0xce, 0x00, 0x00, 0x00, 0x00, 0xcb, 0x5a, 0xae, 0x73, 0x00, 0x00, 0x00, 0x00, 0xec, 0x62, 
@@ -236,48 +237,55 @@ int main(void){
 
     
   while(true){
-    //@ Need a array to track the previous location(x,y) of the cursor and erase by drawing black on previous
-    // clear_screen(1); 
-    // Erase by drawing black on the last last previous location () 
-    draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], WHITE, cursor_size, left_clicked);
+    reset = *RESET_BUTTON_PTR;
+    if(reset != 0){ //if a button is pressed
+    printf("a button is pressed");
+        load_screen();
+        *RESET_BUTTON_PTR = 0b1111; //reset the edge capture
+    }else{
+        //@ Need a array to track the previous location(x,y) of the cursor and erase by drawing black on previous
+        // clear_screen(1); 
+        // Erase by drawing black on the last last previous location () 
+        draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], WHITE, cursor_size, left_clicked);
 
-    mouse_movement movement = get_mouse_movement();
-    bool left_clicked = movement.left_pressed_bit;
-    
-    // Update cursor_location
-    cursor_location[0] = cursor_location[0] + movement.dx;
-    cursor_location[1] = cursor_location[1] + movement.dy;
-    
+        mouse_movement movement = get_mouse_movement();
+        bool left_clicked = movement.left_pressed_bit;
+        
+        // Update cursor_location
+        cursor_location[0] = cursor_location[0] + movement.dx;
+        cursor_location[1] = cursor_location[1] + movement.dy;
+        
 
-    //Update cursor size and colour based on cursor location and its clicking
-    if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){ //if clicked on the pink
-      cursor_colour = BLACK;
-    }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-      cursor_colour = BLUE;
-    }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-      cursor_colour = GREEN;
-    }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-      cursor_colour = PINK;
-    }else if(cursor_location[0] >= 68 && cursor_location[0] <= 76 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-      cursor_colour = RED;
-    }else if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 16 && cursor_location[1] <= 20 && left_clicked){
-      cursor_size = 4;
-    }else if(cursor_location[0] >= 16 && cursor_location[0] <= 24 && cursor_location[1] >= 16 && cursor_location[1] <= 24 && left_clicked){
-      cursor_size = 8;
-    }else if(cursor_location[0] >= 32 && cursor_location[0] <= 44 && cursor_location[1] >= 16 && cursor_location[1] <= 28 && left_clicked){
-      cursor_size = 12;
-    }else if(cursor_location[0] >= 52 && cursor_location[0] <=68 && cursor_location[1] >= 16 && cursor_location[1] <= 32 && left_clicked){
-      cursor_size = 16;
-    }else if(cursor_location[0] >= 76 && cursor_location[0] <= 96 && cursor_location[1] >= 16 && cursor_location[1] <= 36 && left_clicked){
-      cursor_size = 20;
-    }
+        //Update cursor size and colour based on cursor location and its clicking
+        if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){ //if clicked on the pink
+          cursor_colour = BLACK;
+        }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = BLUE;
+        }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = GREEN;
+        }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = PINK;
+        }else if(cursor_location[0] >= 68 && cursor_location[0] <= 76 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = RED;
+        }else if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 16 && cursor_location[1] <= 20 && left_clicked){
+          cursor_size = 4;
+        }else if(cursor_location[0] >= 16 && cursor_location[0] <= 24 && cursor_location[1] >= 16 && cursor_location[1] <= 24 && left_clicked){
+          cursor_size = 8;
+        }else if(cursor_location[0] >= 32 && cursor_location[0] <= 44 && cursor_location[1] >= 16 && cursor_location[1] <= 28 && left_clicked){
+          cursor_size = 12;
+        }else if(cursor_location[0] >= 52 && cursor_location[0] <=68 && cursor_location[1] >= 16 && cursor_location[1] <= 32 && left_clicked){
+          cursor_size = 16;
+        }else if(cursor_location[0] >= 76 && cursor_location[0] <= 96 && cursor_location[1] >= 16 && cursor_location[1] <= 36 && left_clicked){
+          cursor_size = 20;
+        }
 
-    counting_down();
-    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
-  
-    wait_for_vsync(); // swap front and back buffers on VGA vertical sync
-    pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
-    
+        counting_down();
+        draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
+      
+        wait_for_vsync(); // swap front and back buffers on VGA vertical sync
+        pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
+        
+   }
   }
 }
 
