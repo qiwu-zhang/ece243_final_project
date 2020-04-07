@@ -250,18 +250,16 @@ int main(void){
     
 
     //Update cursor size and colour based on cursor location and its clicking
-    if(cursor_location[0] >= 20 && cursor_location[0] <= 28 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){ //if clicked on the pink
-      cursor_colour = PINK;
-    }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
+    if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){ //if clicked on the pink
+      cursor_colour = BLACK;
+    }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
       cursor_colour = BLUE;
-    }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 20 && cursor_location[1] <= 28 && left_clicked){
-      cursor_colour = WHITE;
-    }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 36 && cursor_location[1] <= 40 && left_clicked){
-      cursor_size = 4;
-    }else if(cursor_location[0] >= 32 && cursor_location[0] <= 40 && cursor_location[1] >= 36 && cursor_location[1] <= 44 && left_clicked){
-      cursor_size = 8;
-    }else if(cursor_location[0] >= 48 && cursor_location[0] <= 60 && cursor_location[1] >= 36 && cursor_location[1] <= 48 && left_clicked){
-      cursor_size = 12;
+    }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+      cursor_colour = GREEN;
+    }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+      cursor_colour = PINK;
+    }else if(cursor_location[0] >= 68 && cursor_location[0] <= 76 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+      cursor_colour = RED;
     }
 
     counting_down();
