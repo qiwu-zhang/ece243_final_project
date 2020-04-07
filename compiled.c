@@ -1,6 +1,3 @@
-#ifndef DECLRATION_H
-#define DECLRATION_H
-
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -10,6 +7,7 @@
 #define PINK  0xF81F
 #define BLUE  0x001F
 #define RED   0xF800
+#define GREEN 0x07E0
 
 void load_screen();
 void clear_screen(bool clear_text_box);
@@ -37,11 +35,6 @@ typedef struct  {
 mouse_movement get_mouse_movement();
 
 
-
-#endif
-
-#include <stdbool.h>
-#include <stdlib.h>
 
 volatile int pixel_buffer_start; 
 int black_brush[192] = {
