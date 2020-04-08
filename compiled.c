@@ -12,7 +12,7 @@
 
 //PS/2 mouse send movement/button information to the host using the 3-byte movementpacket
 //This struct is used to store the key information we need from the 3-byte movement packet
-typedef struct  {
+typedef struct {
     int dx;
     int dy;
     int left_pressed_bit;
@@ -26,6 +26,7 @@ void reset_canvas_to_zero();
 void clear_screen(bool clear_text_box);
 void plot_pixel(int x, int y, short int line_color);
 void check_cursor_update_colour_size(int cursor_location[], int right_clicked);
+void check_left_click_update_mode(bool left_clicked);
 void boundary_check(int cursor_location[]);
 void draw_cursor(int x_cursor, int y_cursor, int colour,int cursor_size, bool left_clicked);
 void wait_for_timer_interrupt();
@@ -35,6 +36,8 @@ void draw_block(int x_start, int y_start, int colour, int size);
 void draw_colour_choice_and_brush_size();
 mouse_movement get_mouse_movement();
 
+void midpoint_algorithm_drawcircle(int x0, int y0, int radius);
+
 
 
 /***********************************Global******************************************/
@@ -43,6 +46,8 @@ volatile int* PRIVATE_TIMER_PTR = (int*)0xFFFEC600; //set up a pointer to A9 pri
 volatile int* RESET_BUTTON_PTR = (int*)0xFF20005C; //set up a pointer to buttons
 volatile int* pixel_ctrl_ptr;
 bool left_clicked;
+// Draw mode activated by left click once 
+bool draw_mode = false;
 int reset;
 
 //2-D Arrays keep track of pixel been drawed (0/1)
@@ -243,7 +248,6 @@ int main(void){
   /*************************Initializing front/back pixel buffer End****************************/
 
 
-    
   while(true){
 
     // Read from KEY port to see if ANY KEY is pressed
@@ -266,17 +270,18 @@ int main(void){
         continue;
     }
 
-    // Getting mouse_movement struct 
+    // Getting mouse_movement struct and data
     mouse_movement movement = get_mouse_movement();
     bool left_clicked = movement.left_pressed_bit;
     bool right_clicked = movement.right_pressed_bit;
     
+
     
     //@ Erasing - by drawing WHITE on the last last previous location (); set left click to 0 to avoid write 1 to canavas
-    if(!left_clicked){
+    if(!draw_mode){// If last cylcle not drawing
       draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], WHITE, cursor_size, 0);
-    } else {
-      draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], cursor_colour, cursor_size, 0);
+    } else { // Last cycle drawing
+      draw_cursor(prev_buffer_cursor_location[0], prev_buffer_cursor_location[1], cursor_colour, cursor_size, 1);
     }
 
     //@ Redraw to refresh after erasing white avoid drawing white on brush icons and brush size blocks
@@ -294,6 +299,7 @@ int main(void){
 
     //Cursor status checking (left|right click) - Update cursor size and colour based on cursor location and its clicking
     check_cursor_update_colour_size(cursor_location, right_clicked);   
+    check_left_click_update_mode(left_clicked);
 
     //Boundary checking - If left clicking drawing - can only move within the textbox (correct cursor location if exceeds the bounddary)
     boundary_check(cursor_location);
@@ -302,35 +308,15 @@ int main(void){
     counting_down();
 
     //@ Drawing cursor on updated location (on the back buffer)
-    //If not drawing - Only need to draw cursor on current back buffer
-    if(!left_clicked) {
-      draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
-    } else { // The User is drawing on canvas - Need drawback and then swap to draw on both back&front buffer to keep the "INK"
-      
-      draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
-      printf(" 1) x/y: %i, %i\n", cursor_location[0], cursor_location[1]); 
-      // Swaping front buffer to back
-      wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer 
-      pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
-      // Draw on current back buffer (which is front before)
-      draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
-      printf(" 2) x/y: %i, %i\n", cursor_location[0], cursor_location[1]);
-      wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer 
-      pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
-
-      //? Set prev_location outside of the canvas to avoiding erasing on drawed pixels
-      prev_buffer_cursor_location[0] = 150;
-      prev_buffer_cursor_location[1] = 150;
-
-    }
+    draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, draw_mode);
 
 
 
     //! DEBUG
-    if(left_clicked) {
+    if(draw_mode) {
       printf(" x/y: %i, %i\n", cursor_location[0], cursor_location[1]);
     }
-    
+
     wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer 
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
     
@@ -341,10 +327,10 @@ int main(void){
 
 
 
-void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool left_clicked){
+void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool draw_mode){
 
       draw_block(x_cursor, y_cursor, colour, size);
-      if(left_clicked) {
+      if(draw_mode) {
         canva[x_cursor][y_cursor] = 1;
       }
 }
@@ -385,9 +371,15 @@ void check_cursor_update_colour_size(int cursor_location[], int right_clicked) {
     } 
 }
 
+void check_left_click_update_mode(bool left_clicked) {
+  if(left_clicked){
+    draw_mode = ~draw_mode;
+  }
+  printf("update draw_mode to %i", draw_mode);
+}
 
 void boundary_check(int cursor_location[]) {
-    if(left_clicked) {
+    if(draw_mode) {
       if(cursor_location[0] <=60) {
         cursor_location[0] = 60;
       } else if ( cursor_location[0]  >= 200) {
@@ -511,42 +503,18 @@ void counting_down(){
 }
 
   
-void draw_colour_choice_and_brush_size(){ 
-   draw_black_brush();
-   draw_blue_brush();
-   draw_green_brush();
-   draw_pink_brush();
-   draw_red_brush();
-  
-   for(int x = 4; x < 8; x++){ //4x4 block
-        for(int y = 16; y < 20; y++){
-            plot_pixel(x, y, cursor_colour);
-        }
-   }
-  
-  for(int x = 16; x < 24; x++){ //8x8 block
-        for(int y = 16; y < 24; y++){
-            plot_pixel(x, y, cursor_colour);
-        }
-  }
-  
-  for(int x = 32; x < 44; x++){ //12x12 block
-        for(int y = 16; y < 28; y++){
-            plot_pixel(x, y, cursor_colour);
-        }
-  }
-  
- for(int x = 52; x < 68; x++){ //12x12 block
-        for(int y = 16; y < 32; y++){
-            plot_pixel(x, y, cursor_colour);
-        }
-  }
-  
- for(int x = 76; x < 96; x++){ //12x12 block
-        for(int y = 16; y < 36; y++){
-            plot_pixel(x, y, cursor_colour);
-        }
-  }
+void draw_colour_choice_and_brush_size() {
+  draw_black_brush();
+  draw_blue_brush();
+  draw_green_brush();
+  draw_pink_brush();
+  draw_red_brush();
+  draw_block(4, 16, cursor_colour, 4);
+  draw_block(16, 16, cursor_colour, 8);
+  draw_block(32, 16, cursor_colour, 12);
+  draw_block(52, 16, cursor_colour, 16);
+  draw_block(76, 16, cursor_colour, 20);
+  draw_block(100, 16, GREEN, 10);
 
 }
 
@@ -678,4 +646,37 @@ mouse_movement get_mouse_movement() {
     
     }
 
+}
+
+
+// Midpoint Circle Algorithm
+void midpoint_algorithm_drawcircle(int x0, int y0, int radius) {
+    int x = radius;
+    int y = 0;
+    int err = 0;
+ 
+    while (x >= y)
+    {
+
+      draw_block(x0 + x, y0 + y,BLACK, 4);
+      draw_block(x0 + y, y0 + x,BLACK, 4);
+      draw_block(x0 - y, y0 + x,BLACK, 4);
+      draw_block(x0 - x, y0 + y,BLACK, 4);
+      draw_block(x0 - x, y0 - y,BLACK, 4);
+      draw_block(x0 - y, y0 - x,BLACK, 4);
+      draw_block(x0 + y, y0 - x,BLACK, 4);
+      draw_block(x0 + x, y0 - y,BLACK, 4);
+    
+      if (err <= 0)
+      {
+          y += 1;
+          err += 2*y + 1;
+      }
+    
+      if (err > 0)
+      {
+          x -= 1;
+          err -= 2*x + 1;
+      }
+    }
 }
