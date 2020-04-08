@@ -268,6 +268,34 @@ int main(void){
     cursor_location[0] = cursor_location[0] + movement.dx;
     cursor_location[1] = cursor_location[1] + movement.dy;
 
+    //Update cursor size and colour based on cursor location and its clicking
+        if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){ //if clicked on the pink
+          cursor_colour = BLACK;
+          printf("Changed colour");
+        }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = BLUE;
+          printf("Changed colour");
+        }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = GREEN;
+          printf("Changed colour");
+        }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = PINK;
+          printf("Changed colour");
+        }else if(cursor_location[0] >= 68 && cursor_location[0] <= 76 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
+          cursor_colour = RED;
+          printf("Changed colour");
+        }else if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 16 && cursor_location[1] <= 20 && left_clicked){
+          cursor_size = 4;
+        }else if(cursor_location[0] >= 16 && cursor_location[0] <= 24 && cursor_location[1] >= 16 && cursor_location[1] <= 24 && left_clicked){
+          cursor_size = 8;
+        }else if(cursor_location[0] >= 32 && cursor_location[0] <= 44 && cursor_location[1] >= 16 && cursor_location[1] <= 28 && left_clicked){
+          cursor_size = 12;
+        }else if(cursor_location[0] >= 52 && cursor_location[0] <=68 && cursor_location[1] >= 16 && cursor_location[1] <= 32 && left_clicked){
+          cursor_size = 16;
+        }else if(cursor_location[0] >= 76 && cursor_location[0] <= 96 && cursor_location[1] >= 16 && cursor_location[1] <= 36 && left_clicked){
+          cursor_size = 20;
+        }
+
         //Boudary checking - If clicking drawing - can only move in the textbox
         if(left_clicked) {
           if(cursor_location[0] <=60) {
@@ -295,34 +323,18 @@ int main(void){
           }
         }
 
-        //Update cursor size and colour based on cursor location and its clicking
-        if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){ //if clicked on the pink
-          cursor_colour = BLACK;
-        }else if(cursor_location[0] >= 20 && cursor_location[0] <= 24 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-          cursor_colour = BLUE;
-        }else if(cursor_location[0] >= 36 && cursor_location[0] <= 44 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-          cursor_colour = GREEN;
-        }else if(cursor_location[0] >= 52 && cursor_location[0] <= 60 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-          cursor_colour = PINK;
-        }else if(cursor_location[0] >= 68 && cursor_location[0] <= 76 && cursor_location[1] >= 0 && cursor_location[1] <= 12 && left_clicked){
-          cursor_colour = RED;
-        }else if(cursor_location[0] >= 4 && cursor_location[0] <= 8 && cursor_location[1] >= 16 && cursor_location[1] <= 20 && left_clicked){
-          cursor_size = 4;
-        }else if(cursor_location[0] >= 16 && cursor_location[0] <= 24 && cursor_location[1] >= 16 && cursor_location[1] <= 24 && left_clicked){
-          cursor_size = 8;
-        }else if(cursor_location[0] >= 32 && cursor_location[0] <= 44 && cursor_location[1] >= 16 && cursor_location[1] <= 28 && left_clicked){
-          cursor_size = 12;
-        }else if(cursor_location[0] >= 52 && cursor_location[0] <=68 && cursor_location[1] >= 16 && cursor_location[1] <= 32 && left_clicked){
-          cursor_size = 16;
-        }else if(cursor_location[0] >= 76 && cursor_location[0] <= 96 && cursor_location[1] >= 16 && cursor_location[1] <= 36 && left_clicked){
-          cursor_size = 20;
-        }
 
     
     counting_down();
 
     //Drawing cursor on updated location (on the back buffer)
     draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, left_clicked);
+
+
+    //!DEBUG
+    if(left_clicked) {
+      printf(" x/y: %i, %i\n", cursor_location[0], cursor_location[1]);
+    }
     
     wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer 
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
