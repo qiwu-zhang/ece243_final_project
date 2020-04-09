@@ -389,16 +389,16 @@ void check_left_click_update_mode(bool left_clicked) {
 
 void boundary_check(int cursor_location[]) {
     if(draw_mode) {
-      if(cursor_location[0] <=50) {
-        cursor_location[0] = 50;
-      } else if ( cursor_location[0]  >= 240) {
-        cursor_location[0] = 240;
+      if(cursor_location[0] <=40) {
+        cursor_location[0] = 40;
+      } else if ( cursor_location[0]  >= 230) {
+        cursor_location[0] = 230;
       }
 
-    if(cursor_location[1] <= 100) {
-       cursor_location[1] = 100;
-      } else if (cursor_location[1] >= 200) {
-        cursor_location[1] = 200;
+    if(cursor_location[1] <= 30) {
+       cursor_location[1] = 30;
+      } else if (cursor_location[1] >= 300) {
+        cursor_location[1] = 290;
       }
     } else { //cursor can move whole VGA display
       if(cursor_location[0] <=0) {
@@ -458,10 +458,10 @@ void load_screen() {
     
 
     draw_colour_choice_and_brush_size();
-    draw_line(50, 100, 50, 200, BLACK);  // vertical line from (100, 100) to (100, 200)
-    draw_line(50, 100, 250, 100, BLACK); // hoizontal line from (100, 100) to (200, 100)
-    draw_line(250, 100, 250, 200, BLACK); // vertical line from (200, 100) to (200, 200)
-    draw_line(50, 200, 250, 200, BLACK); // horizontal line from (200, 100) to (200, 200)
+    draw_line(30, 40, 30, 230, BLACK);  // vertical line from (30, 40) to (30, 230)
+    draw_line(30, 40, 300, 40, BLACK); // hoizontal line from (30, 40) to (300, 40)
+    draw_line(300, 40, 300, 230, BLACK); // vertical line from (300, 40) to (300, 230)
+    draw_line(30, 230, 300, 230, BLACK); // horizontal line from (30, 230) to (300, 230)
 }
 
 
@@ -490,8 +490,8 @@ void clear_screen(bool clear_text_box) {
         }
     }
   }else{
-    for (int x = 51; x < 250; x++) { 
-        for (int y = 101; y < 200; y++) {
+    for (int x = 31; x < 300; x++) { 
+        for (int y = 41; y < 230; y++) {
             plot_pixel(x, y, WHITE);//Plotting black pixel all over the VGA display
         }
     }
@@ -678,22 +678,26 @@ mouse_movement get_mouse_movement() {
 
 
 void ink_to_circle() {
-  //Reset canvas to white
-  clear_screen(1);
-  wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer
-  pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
-  clear_screen(1);
-
-  
-  printf ("hello\n");
   centriod centriod_find = find_centriod();
   printf ("Found centriod x/y: %i %i\n", centriod_find.x0, centriod_find.y0);
   int x0 = centriod_find.x0;
   int y0 = centriod_find.y0;
   int radius = centriod_find.radius;
+
+  //Reset canvas to white in back buffer
+  clear_screen(1);
   
+  //Reconstruct a perfect circle in current back buffer
   midpoint_algorithm_draw_circle(x0, y0, radius);
   plot_pixel(x0, y0, BLACK);
+
+  wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer
+  pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
+  clear_screen(1);
+
+  midpoint_algorithm_draw_circle(x0, y0, radius);
+  plot_pixel(x0, y0, BLACK);
+
   
 }
 
@@ -703,15 +707,15 @@ centriod find_centriod() {
   int x_segs_num = 0;
   int y_segs_num = 0;
 
-  for(int i = 0; i < 240; i ++) {
-    for(int j = 0; j <320; j ++) {
+  for(int i = 41; i < 230; i ++) {
+    for(int j = 30; j <300; j ++) {
        if(canvas[i][j] == 1){
          //If come across a drawed pixel, start to traverse downwards (i++) and increment  y_seg_num (1 pixel wide)
          int tempi = i;
          int tempj = j;
          tempj ++;
          tempi ++;
-         while(tempi <= 200) {
+         while(tempi <= 230) {
            if(canvas[tempi][j] == 1) {
             x_segs_num += 1;
             // Sum - Compute the avg x centriod of this differential rectangle (1-pixel wide)
@@ -725,7 +729,7 @@ centriod find_centriod() {
          }
 
           // Start to traverse to right 
-          while(tempj <= 250) {
+          while(tempj <= 300) {
             if(canvas[i][tempj] == 1) {
               y_segs_num += 1;
               centriod_find.y0 += (tempj +j)/2;
