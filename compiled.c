@@ -783,6 +783,10 @@ mouse_movement get_mouse_movement() {
 
 }
 
+void ink_to_circle() {
+  
+}
+
 
 // Midpoint Circle Algorithm
 void midpoint_algorithm_drawcircle(int x0, int y0, int radius) {
