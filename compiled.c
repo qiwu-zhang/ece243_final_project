@@ -19,10 +19,16 @@ typedef struct {
     int right_pressed_bit;
 }mouse_movement;
 
+typedef struct {
+  int x0;
+  int y0;
+  int radius;
+} centriod;
+
 
 void load_screen();
 void redraw_icon_and_box();
-void reset_canvas_to_zero();
+void reset_canvass_to_zero();
 void clear_screen(bool clear_text_box);
 void plot_pixel(int x, int y, short int line_color);
 void check_cursor_update_colour_size(int cursor_location[], int right_clicked);
@@ -36,9 +42,12 @@ void draw_block(int x_start, int y_start, int colour, int size);
 void draw_colour_choice_and_brush_size();
 mouse_movement get_mouse_movement();
 
-void midpoint_algorithm_drawcircle(int x0, int y0, int radius);
-void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length);
 
+//Functions for ink to shape algorithm 
+void ink_to_circle();
+centriod find_centriod();
+void midpoint_algorithm_draw_circle(int x0, int y0, int radius);
+void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length);
 
 
 /***********************************Global******************************************/
@@ -56,7 +65,7 @@ int reset;
 
 //2-D Arrays keep track of pixel been drawed (0/1)
 /* 2D array declaration using initializing list*/
-int canva[240][320] = {0};
+int canvas[240][320] = {0};
 
 
 
@@ -260,8 +269,8 @@ int main(void)
       pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
       //Reset screen of swaped front buffer (both buffer is reset now)
       load_screen();
-      //Reset canvas 2d array to all ZERO
-      reset_canvas_to_zero();
+      //Reset canvass 2d array to all ZERO
+      reset_canvass_to_zero();
 
       //reset the edge capture
       *RESET_BUTTON_PTR = 0b1111;
@@ -323,7 +332,8 @@ void draw_cursor(int x_cursor, int y_cursor, int colour, int size, bool draw_mod
 
       draw_block(x_cursor, y_cursor, colour, size);
       if(draw_mode) {
-        canva[x_cursor][y_cursor] = 1;
+        canvas[x_cursor][y_cursor] = 1;
+        printf("Writing into canvas\n");
       }
 }
 
@@ -360,6 +370,8 @@ void check_cursor_update_colour_size(int cursor_location[], int right_clicked) {
       cursor_size = 16;
     }else if(cursor_location[0] >= 76 && cursor_location[0] <= 96 && cursor_location[1] >= 16 && cursor_location[1] <= 36 && right_clicked){
       cursor_size = 20;
+    }else if(cursor_location[0] >= 100 && cursor_location[0] <= 110 && cursor_location[1] >= 16 && cursor_location[1] <= 26 && right_clicked){
+      ink_to_circle();
     } 
 }
 
@@ -371,24 +383,22 @@ void check_left_click_update_mode(bool left_clicked) {
     } else {
       draw_mode = true;
     }
-    
+    printf("Changed draw_mode to %i\n", draw_mode);
   }
-
-  printf("update draw_mode to %i\n", draw_mode);
 }
 
 void boundary_check(int cursor_location[]) {
     if(draw_mode) {
-      if(cursor_location[0] <=60) {
-        cursor_location[0] = 60;
-      } else if ( cursor_location[0]  >= 200) {
-        cursor_location[0] = 200;
+      if(cursor_location[0] <=50) {
+        cursor_location[0] = 50;
+      } else if ( cursor_location[0]  >= 240) {
+        cursor_location[0] = 240;
       }
 
-    if(cursor_location[1] <= 110) {
-       cursor_location[1] = 110;
-      } else if (cursor_location[1] >= 190) {
-        cursor_location[1] = 240;
+    if(cursor_location[1] <= 100) {
+       cursor_location[1] = 100;
+      } else if (cursor_location[1] >= 200) {
+        cursor_location[1] = 200;
       }
     } else { //cursor can move whole VGA display
       if(cursor_location[0] <=0) {
@@ -463,10 +473,10 @@ void redraw_icon_and_box() {
     draw_line(30, 230, 300, 230, BLACK); // horizontal line from (30, 230) to (300, 230)
 }
 
-void reset_canvas_to_zero() {
+void reset_canvass_to_zero() {
     for(int i = 0; i < 240 ; i++) {
         for(int j = 0; j < 320; j++) {
-            canva[i][j] = 0;
+            canvas[i][j] = 0;
         }
     }
 }
@@ -666,32 +676,99 @@ mouse_movement get_mouse_movement() {
 
 }
 
-void ink_to_circle() {
 
+void ink_to_circle() {
+  //Reset canvas to white
+  clear_screen(1);
+  wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer
+  pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
+  clear_screen(1);
+
+  
+  printf ("hello\n");
+  centriod centriod_find = find_centriod();
+  printf ("Found centriod x/y: %i %i\n", centriod_find.x0, centriod_find.y0);
+  int x0 = centriod_find.x0;
+  int y0 = centriod_find.y0;
+  int radius = centriod_find.radius;
+  
+  midpoint_algorithm_draw_circle(x0, y0, radius);
+  plot_pixel(x0, y0, BLACK);
+  
 }
 
+centriod find_centriod() {
+  //INITIALIZING return value (x0, y0, and radius)
+  centriod  centriod_find;
+  int x_segs_num = 0;
+  int y_segs_num = 0;
 
-void ink_to_squaure(){
+  for(int i = 0; i < 240; i ++) {
+    for(int j = 0; j <320; j ++) {
+       if(canvas[i][j] == 1){
+         //If come across a drawed pixel, start to traverse downwards (i++) and increment  y_seg_num (1 pixel wide)
+         int tempi = i;
+         int tempj = j;
+         tempj ++;
+         tempi ++;
+         while(tempi <= 200) {
+           if(canvas[tempi][j] == 1) {
+            x_segs_num += 1;
+            // Sum - Compute the avg x centriod of this differential rectangle (1-pixel wide)
+            centriod_find.x0 += (tempi + i)/2;
+            //?Set that bottom pixel to 0 since it's a enclosed shape 
+            canvas[tempi][j] = 0;
+
+            
+           }
+           tempi ++;
+         }
+
+          // Start to traverse to right 
+          while(tempj <= 250) {
+            if(canvas[i][tempj] == 1) {
+              y_segs_num += 1;
+              centriod_find.y0 += (tempj +j)/2;
+              canvas[i][tempj] = 0;//?
+            }
+
+            tempj ++;
+
+          }
+
+
+       }
+    }
+  }
+
+  //Last, sum all the x-centriod and y centriod of differential components and divided by number of components to get the avg 
+  centriod_find.x0 = centriod_find.x0/x_segs_num;
+  centriod_find.y0 = centriod_find.y0/y_segs_num;
+  centriod_find.radius = 20;
+
+  return centriod_find; 
+  
 
 }
 
 
 // Midpoint Circle Algorithm
-void midpoint_algorithm_drawcircle(int x0, int y0, int radius) {
+void midpoint_algorithm_draw_circle(int x0, int y0, int radius) {
     int x = radius;
     int y = 0;
     int err = 0;
  
     while (x >= y) {
 
-      draw_block(x0 + x, y0 + y,BLACK, 4);
-      draw_block(x0 + y, y0 + x,BLACK, 4);
-      draw_block(x0 - y, y0 + x,BLACK, 4);
-      draw_block(x0 - x, y0 + y,BLACK, 4);
-      draw_block(x0 - x, y0 - y,BLACK, 4);
-      draw_block(x0 - y, y0 - x,BLACK, 4);
-      draw_block(x0 + y, y0 - x,BLACK, 4);
-      draw_block(x0 + x, y0 - y,BLACK, 4);
+      
+      draw_block(x0 + x, y0 + y,BLACK, 1);
+      draw_block(x0 + y, y0 + x,BLACK, 1);
+      draw_block(x0 - y, y0 + x,BLACK, 1);
+      draw_block(x0 - x, y0 + y,BLACK, 1);
+      draw_block(x0 - x, y0 - y,BLACK, 1);
+      draw_block(x0 - y, y0 - x,BLACK, 1);
+      draw_block(x0 + y, y0 - x,BLACK, 1);
+      draw_block(x0 + x, y0 - y,BLACK, 1);
     
       if (err <= 0)
       {
