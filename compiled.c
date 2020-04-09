@@ -1,6 +1,55 @@
+/**************************************************************************************************
+ * ECE243 Final Project: VGA Drawing Board with "Ink to Shape" Feature
+ * TA: Ciaran B. 
+ * Team Member: Yixin T., Qiwu Z.
+ * 
+ * ************************************************************************************************
+ * Description: 
+ * 
+ * The application is wrote in C and is designed to be run on ARM DE1-SoC computer. The application allows user to
+ * draw on VGA real-time with a PS/2 Mouse by polling 3-byte PS/2 movement packet(2's complement mouse movement, left/right click 
+ * bit) from the PS/2 port on DE1-SoC Board. The extra feature being added now is "ink to circle" which can later be extended to 
+ * more shapes.
+ * 
+ * ***********************************************************************************************
+ * Interface:
+ * 
+ * 1) Left click - toggle draw_mode on/off (this sometimes need accurate click rate as the read speed from PS/2 port is 4 times/s)
+ * 2) Right click - select brush colour/size 
+ * 3) Brush Colour - located at the top left of the VGA display 
+ * 4) Brush Size - locatied below the brush colour
+ * 5) "Ink to Circle" - the green button on the right of the brush size
+ * 6) KEY[3-0] - Reset cursor and clear the canvas
+ * 
+ * ************************************************************************************************
+ * An Example Showing How to Use: 
+ * 
+ * 1) Open and compile the code on CPULATOR: https://cpulator.01xz.net/?sys=arm-de1soc
+ * 2) Click on the small drop-down menu on the top left of the PS/2 Keyboard or Mouse panel and select "Mouse" in "Mode" 
+ * 3) Run the compiled code and locatae one of the two PS/2 Keyboard or Mouse panels on the left 
+ * 4) If want to move mouse click "start" and move slowly (otherwise may cause 64-byte FIFO overflow), click "Esc" to pause
+ * 5) click left button once to toggle into "draw mode" and click one more time to switch back 
+ * Note: if it's not working properly, exit capture mode and use "send packet 3-byte" to send left/right click signal
+ * 
+ * 6) Draw something using different brushes! (Use right click for selecting)
+ * 
+ * 7) After done drawing click "ink-to-circle" button (green) - this only supports when there is only a single enclosed contour
+ * on the VGA display
+ * 
+ * 8) Press any KEY to reset  
+ * 
+ * ************************************************************************************************
+ * Troubleshooting: 
+ * 
+ * 1) if get "CPU tried writing to address ..." error afte right click on "ink-to-circle" button, that means it's reading right  
+ * click multiple times  - use "send packet - 3-byte" in "PS/2 Keyboard or Mouse" panel as your right click
+ * 
+ * *************************************************************************************************/
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <math.h>
 
 #define WHITE 0xFFFF
 #define BLACK 0x0000
@@ -47,7 +96,7 @@ mouse_movement get_mouse_movement();
 void ink_to_circle();
 centriod find_centriod();
 void midpoint_algorithm_draw_circle(int x0, int y0, int radius);
-void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length);
+// void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length);
 
 
 /***********************************Global******************************************/
@@ -376,7 +425,7 @@ void check_cursor_update_colour_size(int cursor_location[], int right_clicked) {
 }
 
 void check_left_click_update_mode(bool left_clicked) {
-  printf("draw_mode is %i\n", draw_mode);
+
   if(left_clicked){
     if(draw_mode) {
       draw_mode = false;
@@ -389,16 +438,16 @@ void check_left_click_update_mode(bool left_clicked) {
 
 void boundary_check(int cursor_location[]) {
     if(draw_mode) {
-      if(cursor_location[0] <=40) {
-        cursor_location[0] = 40;
-      } else if ( cursor_location[0]  >= 230) {
-        cursor_location[0] = 230;
+      if(cursor_location[0] <=30) {
+        cursor_location[0] = 30;
+      } else if ( cursor_location[0]  >= 300) {
+        cursor_location[0] = 300;
       }
 
-    if(cursor_location[1] <= 30) {
-       cursor_location[1] = 30;
-      } else if (cursor_location[1] >= 300) {
-        cursor_location[1] = 290;
+    if(cursor_location[1] <= 40) {
+       cursor_location[1] = 40;
+      } else if (cursor_location[1] >= 230) {
+        cursor_location[1] = 230;
       }
     } else { //cursor can move whole VGA display
       if(cursor_location[0] <=0) {
@@ -701,9 +750,19 @@ void ink_to_circle() {
   
 }
 
+
+//Find the x/y centriod coordinates of all differnetial rectangles (1-pixel wide) and take the average
 centriod find_centriod() {
   //INITIALIZING return value (x0, y0, and radius)
   centriod  centriod_find;
+  
+  //Default centriod position at 150,150
+  centriod_find.x0 = 150;
+  centriod_find.y0 = 150;
+  //default Radius
+  centriod_find.radius = 20;
+
+
   int x_segs_num = 0;
   int y_segs_num = 0;
 
@@ -713,7 +772,7 @@ centriod find_centriod() {
          //If come across a drawed pixel, start to traverse downwards (i++) and increment  y_seg_num (1 pixel wide)
          int tempi = i;
          int tempj = j;
-         tempj ++;
+         
          tempi ++;
          while(tempi <= 230) {
            if(canvas[tempi][j] == 1) {
@@ -722,18 +781,19 @@ centriod find_centriod() {
             centriod_find.x0 += (tempi + i)/2;
             //?Set that bottom pixel to 0 since it's a enclosed shape 
             canvas[tempi][j] = 0;
-
             
            }
            tempi ++;
          }
 
+          tempj ++;
           // Start to traverse to right 
           while(tempj <= 300) {
             if(canvas[i][tempj] == 1) {
               y_segs_num += 1;
               centriod_find.y0 += (tempj +j)/2;
               canvas[i][tempj] = 0;//?
+              
             }
 
             tempj ++;
@@ -748,7 +808,37 @@ centriod find_centriod() {
   //Last, sum all the x-centriod and y centriod of differential components and divided by number of components to get the avg 
   centriod_find.x0 = centriod_find.x0/x_segs_num;
   centriod_find.y0 = centriod_find.y0/y_segs_num;
-  centriod_find.radius = 20;
+
+
+  printf(" Sum of differential x_centriod : % i; Sum of differential y_centriod  is %i \n", centriod_find.x0, centriod_find.y0);
+  printf(" Differential x_segd_num is %i; Differential y_segs_num is %i \n", x_segs_num, y_segs_num);
+
+
+  /******************************Find all distance from drawed pixel to  found centriod and take the average as the radius******************************/
+
+  // counter_differential_distance_from_pixel_to_centriod
+  int counter_differential_distance = 0;
+
+  //Will be casted into int in final stage 
+  double sum_of_differential_distance = 0;
+
+  for(int i = 41; i < 230; i ++) {
+    for(int j = 30; j <300; j ++) {
+       if(canvas[i][j] == 1){
+         //If come across a drawed pixel, Compute the geometrical distance to the centriod found above
+        double dx = abs( i - centriod_find.x0);
+        double dy = abs( j - centriod_find.y0);
+        sum_of_differential_distance += sqrt(pow((float)dx, 2) + pow((float)dy, 2));
+        counter_differential_distance ++;
+       }
+  
+    }
+  }
+
+  if(counter_differential_distance != 0)
+    centriod_find.radius = (int)sum_of_differential_distance/ (int)counter_differential_distance;
+
+  printf("Finding radius... The radius is: %i\n", centriod_find.radius);
 
   return centriod_find; 
   
@@ -789,9 +879,9 @@ void midpoint_algorithm_draw_circle(int x0, int y0, int radius) {
 }
 
 
-void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length){
-    int x = 0.5 * side_Length;
-    int y = 0;
-    int error = 0;
+// void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length){
+//     int x = 0.5 * side_Length;
+//     int y = 0;
+//     int error = 0;
 
-}
+// }
