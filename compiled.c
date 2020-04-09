@@ -37,6 +37,7 @@ void draw_colour_choice_and_brush_size();
 mouse_movement get_mouse_movement();
 
 void midpoint_algorithm_drawcircle(int x0, int y0, int radius);
+void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length);
 
 
 
@@ -310,11 +311,6 @@ int main(void)
 
     draw_cursor(cursor_location[0], cursor_location[1], cursor_colour, cursor_size, draw_mode);
 
-    //! DEBUG
-
-    if (draw_mode) {
-      printf(" x/y: %i, %i\n", cursor_location[0], cursor_location[1]);
-    }
 
     wait_for_vsync(); // swap front and back buffers on VGA vertical sync i.e. display drawed back buffer
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // Set to draw on new back buffer
@@ -368,11 +364,17 @@ void check_cursor_update_colour_size(int cursor_location[], int right_clicked) {
 }
 
 void check_left_click_update_mode(bool left_clicked) {
+  printf("draw_mode is %i\n", draw_mode);
   if(left_clicked){
-    draw_mode = ~draw_mode;
+    if(draw_mode) {
+      draw_mode = false;
+    } else {
+      draw_mode = true;
+    }
+    
   }
 
-  printf("update draw_mode to %i", draw_mode);
+  printf("update draw_mode to %i\n", draw_mode);
 }
 
 void boundary_check(int cursor_location[]) {
@@ -455,10 +457,10 @@ void load_screen() {
 
 void redraw_icon_and_box() {
     draw_colour_choice_and_brush_size();
-    draw_line(50, 100, 50, 200, BLACK);  // vertical line from (100, 100) to (100, 200)
-    draw_line(50, 100, 250, 100, BLACK); // hoizontal line from (100, 100) to (200, 100)
-    draw_line(250, 100, 250, 200, BLACK); // vertical line from (200, 100) to (200, 200)
-    draw_line(50, 200, 250, 200, BLACK); // horizontal line from (200, 100) to (200, 200)
+    draw_line(30, 40, 30, 230, BLACK);  // vertical line from (30, 40) to (30, 230)
+    draw_line(30, 40, 300, 40, BLACK); // hoizontal line from (30, 40) to (300, 40)
+    draw_line(300, 40, 300, 230, BLACK); // vertical line from (300, 40) to (300, 230)
+    draw_line(30, 230, 300, 230, BLACK); // horizontal line from (30, 230) to (300, 230)
 }
 
 void reset_canvas_to_zero() {
@@ -665,7 +667,12 @@ mouse_movement get_mouse_movement() {
 }
 
 void ink_to_circle() {
-  
+
+}
+
+
+void ink_to_squaure(){
+
 }
 
 
@@ -675,8 +682,7 @@ void midpoint_algorithm_drawcircle(int x0, int y0, int radius) {
     int y = 0;
     int err = 0;
  
-    while (x >= y)
-    {
+    while (x >= y) {
 
       draw_block(x0 + x, y0 + y,BLACK, 4);
       draw_block(x0 + y, y0 + x,BLACK, 4);
@@ -699,4 +705,12 @@ void midpoint_algorithm_drawcircle(int x0, int y0, int radius) {
           err -= 2*x + 1;
       }
     }
+}
+
+
+void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length){
+    int x = 0.5 * side_Length;
+    int y = 0;
+    int error = 0;
+
 }
