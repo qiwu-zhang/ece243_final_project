@@ -1,5 +1,5 @@
 # ece243_final_project
-Final Project that implements "ink to shape" feature using C on ARMv7 DE1-Soc computer and VGA display. See code in compiled.c
+Final Project that implements "ink to shape" feature using C on ARMv7 DE1-Soc computer and VGA display. See complete code in ink_to_shape.c
 
 ### Applied Algorithms (In C)
 - Midpoint circle 
