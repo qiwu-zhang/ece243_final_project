@@ -1,7 +1,88 @@
-#include <stdbool.h>
-#include <stdlib.h>
+#ifndef DECLRATION_H
+#define DECLRATION_H
 
-volatile int pixel_buffer_start; 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
+
+#define WHITE 0xFFFF
+#define BLACK 0x0000
+#define PINK  0xF81F
+#define BLUE  0x001F
+#define RED   0xF800
+#define GREEN 0x07E0 
+
+
+//PS/2 mouse send movement/button information to the host using the 3-byte movementpacket
+//This struct is used to store the key information we need from the 3-byte movement packet
+typedef struct {
+    int dx;
+    int dy;
+    int left_pressed_bit;
+    int right_pressed_bit;
+}mouse_movement;
+
+typedef struct {
+  int x0;
+  int y0;
+  int radius;
+} centriod;
+
+
+void load_screen();
+void redraw_icon_and_box();
+void reset_canvass_to_zero();
+void clear_screen(bool clear_text_box);
+void plot_pixel(int x, int y, short int line_color);
+void check_cursor_update_colour_size(int cursor_location[], int right_clicked);
+void check_left_click_update_mode(bool left_clicked);
+void boundary_check(int cursor_location[]);
+void draw_cursor(int x_cursor, int y_cursor, int colour,int cursor_size, bool left_clicked);
+void wait_for_timer_interrupt();
+void wait_for_vsync();
+void counting_down();
+void draw_block(int x_start, int y_start, int colour, int size);
+void draw_colour_choice_and_brush_size();
+mouse_movement get_mouse_movement();
+
+
+//Functions for ink to shape algorithm 
+void ink_to_circle();
+centriod find_centriod();
+void midpoint_algorithm_draw_circle(int x0, int y0, int radius);
+// void midpoint_algorithm_drawsquare(int x0, int y0, int side_Length);
+
+
+/***********************************Global******************************************/
+volatile int pixel_buffer_start; // global variable
+volatile int* PRIVATE_TIMER_PTR = (int*)0xFFFEC600; //set up a pointer to A9 private timer
+volatile int* RESET_BUTTON_PTR = (int*)0xFF20005C; //set up a pointer to buttons
+volatile int* pixel_ctrl_ptr;
+bool left_clicked;
+
+int cursor_colour;
+// Draw mode activated by left click once 
+bool draw_mode = false;
+int reset;
+
+
+//2-D Arrays keep track of pixel been drawed (0/1)
+/* 2D array declaration using initializing list*/
+int canvas[240][320] = {0};
+
+
+
+//Variable holds brush size and it's colour, update in the while loop accordingly left click position 
+int cursor_colour = BLACK; //initialize to white brush
+int cursor_size = 4;
+
+//Arrays that hold cursor's x/y location in the VGA display
+int cursor_location[2] = {150, 150};
+int prev_buffer_cursor_location[2] = {150, 150};
+/***********************************Global End******************************************/
+
+ 
 int black_brush[192] = {
   /*Pixel format: Red: 5 bit, Green: 6 bit, Blue: 5 bit*/
   0x79, 0xce, 0x00, 0x00, 0x00, 0x00, 0xcb, 0x5a, 0xae, 0x73, 0x00, 0x00, 0x00, 0x00, 0xec, 0x62, 
@@ -73,7 +154,6 @@ int red_brush[] = {
   0xff, 0xff, 0xff, 0xff, 0x79, 0xc6, 0x00, 0xc8, 0x29, 0x7a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x09, 0x6a, 0x1c, 0xe7, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
   
-
 
  void draw_black_brush(){
   int i = 0, j = 0;
@@ -155,4 +235,7 @@ void draw_red_brush(){
     }
   }
 }
+
+
+#endif
 
